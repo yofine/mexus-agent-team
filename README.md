@@ -1,9 +1,8 @@
 # Mexus Agent Team
 
-Standalone Markdown-only Agent Team plugin for Claude Code and Codex.
-
 <img width="1919" height="934" alt="image" src="https://github.com/user-attachments/assets/0cddab1a-ce12-4a5b-a914-eb2c6f0e3553" />
 
+Standalone Markdown-only Agent Team plugin for Claude Code and Codex.
 Coordination happens through ordinary Markdown files in the current project:
 
 ```text
