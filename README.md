@@ -1,8 +1,9 @@
 # Mexus Agent Team
 
 Standalone Markdown-only Agent Team plugin for Claude Code and Codex.
+<img width="1919" height="934" alt="image" src="https://github.com/user-attachments/assets/0cddab1a-ce12-4a5b-a914-eb2c6f0e3553" />
 
-This plugin does not require a Mexus server, Mexus panes, Mission Inbox, external A2A messaging, or a dispatch runtime. Coordination happens through ordinary Markdown files in the current project:
+Coordination happens through ordinary Markdown files in the current project:
 
 ```text
 agent-team/
