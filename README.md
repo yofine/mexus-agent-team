@@ -1,77 +1,80 @@
-# Mexus Agent Team
+<div align="center">
+  <h1>Mexus Agent Team</h1>
+  <p><b>A Markdown-only agent team workflow for Claude Code and Codex.</b></p>
+</div>
 
-<img width="1919" height="934" alt="image" src="https://github.com/user-attachments/assets/0cddab1a-ce12-4a5b-a914-eb2c6f0e3553" />
+<br/>
 
-Standalone Markdown-only Agent Team plugin for Claude Code and Codex.
-Coordination happens through ordinary Markdown files in the current project:
+<img width="1919" height="934" alt="Mexus Agent Team board" src="https://github.com/user-attachments/assets/0cddab1a-ce12-4a5b-a914-eb2c6f0e3553" />
+
+## Why
+
+A **Mission** is a bounded objective. A **Squad Lead** decomposes it, names a squad, and publishes tasks to a kanban. Background Agents claim tasks, do the work, and write results back. Every handoff is a Markdown edit you can open, diff, and review.
+
+The kanban file *is* the coordination protocol. If you can read `kanban.md`, you know what every agent is doing and why.
+
+This is a standalone plugin for **Claude Code** and **Codex**. It does not require a Mexus server, panes, a Mission Inbox, or external A2A messaging — coordination happens entirely through the `agent-team/` Markdown files.
+
+## How It Works
+
+Coordination lives entirely in one directory of your project:
 
 ```text
 agent-team/
-├── mission-workflow.md
-├── agents.md
+├── mission-workflow.md          the reusable collaboration rules
+├── agents.md                    repository-level reusable agent roster
 └── missions/<mission-name>/
-    ├── mission.md
-    ├── agents.md
-    ├── kanban.md
-    ├── roundtable.md
-    └── squad-lead.md
+    ├── mission.md               goal, lifecycle, constraints
+    ├── agents.md                this Mission's squad and prompts
+    ├── kanban.md                task source of truth — the protocol
+    ├── roundtable.md            shared decisions
+    └── squad-lead.md            Squad Lead coordination log
 ```
+
+- **Squad Lead** is a fixed coordination role — it plans, dispatches, sequences, and accepts. It never writes another agent's results.
+- **Mission Agents** are background workers, named at random from the 72 spirits of the Ars Goetia. Each claims one scoped task, self-tests it, and fills in its own kanban block.
+- **Publisher acceptance**: whoever publishes a task (`From`) reviews and accepts it. Squad Lead does mission-level acceptance on top.
+
+Starting a new Mission archives the previous active one. Agents communicate only through the kanban file.
 
 ## Commands
 
-Claude Code plugin skills are always namespaced by the plugin name. This plugin uses the `mexus-team` namespace.
+Plugin skills are namespaced by the plugin. This plugin uses the `mexus-team` namespace.
 
-```text
-/mexus-team:mission "<request>"    Create a new Markdown-backed Agent Team Mission and start executing it.
-/mexus-team:continue               Resume the active Mission in a later session.
-/mexus-team:roundtable "<topic>"   Open a RoundTable proposal for a shared decision.
-/mexus-team:board                  Start a local read-only Web board for agent-team/.
-/mexus-team:status                 Print a concise Mission summary.
-```
+| Command | When | What it does |
+| :--- | :--- | :--- |
+| [`/mexus-team:mission`](skills/mission/SKILL.md) `"<request>"` | Starting a new piece of work | Creates a Mission, archives the old one, plans the squad and kanban, starts the board, and dispatches the first background Agents. |
+| [`/mexus-team:continue`](skills/continue/SKILL.md) | Resuming a Mission in a later session | Reads the existing kanban and restarts outstanding tasks. No re-planning, no archiving. |
+| [`/mexus-team:roundtable`](skills/roundtable/SKILL.md) `"<topic>"` | A decision affects multiple agents | Opens a RoundTable proposal for a shared decision. |
+| [`/mexus-team:board`](skills/board/SKILL.md) | Watching a Mission run | Starts a local read-only Web board over `agent-team/`. |
+| [`/mexus-team:status`](skills/status/SKILL.md) | A quick terminal check | Prints a concise Mission and task summary. |
 
-`/mexus-team:mission` creates a Mission, then immediately plans the squad, starts the board, and dispatches the first background Agents. `/mexus-team:continue` is only for picking a Mission back up after the original session has ended — within one `mission` session Squad Lead dispatches follow-up work on its own.
+Within one `/mexus-team:mission` session, Squad Lead dispatches follow-up tasks on its own — you do not run a command for that. `/mexus-team:continue` exists only to pick a Mission back up after the original session has ended.
 
-## Claude Code Session-Only Usage
+## Install
 
-Use this when you only want to load the local plugin for the current Claude Code session.
+**Session-only (Claude Code)**
 
-From any project directory:
+Load the plugin for the current session, from any project directory:
 
 ```bash
 claude --plugin-dir /absolute/path/to/mexus-agent-team
 ```
 
-Then run:
+`--plugin-dir` may not show up in `/plugin list`; verify with `/help` or by invoking `/mexus-team:mission`. Do not pass `--disable-slash-commands`.
 
-```text
-/mexus-team:mission "Build a small demo feature"
-/mexus-team:continue
-/mexus-team:roundtable "Decide the API boundary"
-/mexus-team:board
-/mexus-team:status
-```
-
-`--plugin-dir` loads a session-only plugin. It may not appear as an installed plugin in `/plugin list`; use `/help` or invoke `/mexus-team:mission` to verify the loaded skills.
-
-If `/mexus-team:mission` is not found:
+If the command is not found:
 
 ```bash
 claude plugin validate /absolute/path/to/mexus-agent-team
 claude --plugin-dir /absolute/path/to/mexus-agent-team --debug-file /tmp/mexus-team-debug.log
 ```
 
-The debug log should contain:
+The debug log should contain `Loaded inline plugin from path: mexus-team`.
 
-```text
-Loaded inline plugin from path: mexus-team
-Loaded skills from plugin mexus-team default directory
-```
+**Local marketplace (Claude Code)**
 
-Do not pass `--disable-slash-commands`.
-
-## Claude Code Local Marketplace Install
-
-Use this when you want Claude Code to install the local plugin through a local marketplace entry. The marketplace file is inside this plugin directory at `.claude-plugin/marketplace.json`, so add the plugin directory itself as the marketplace path:
+The marketplace file lives inside this directory at `.claude-plugin/marketplace.json`, so add the plugin directory itself:
 
 ```bash
 claude plugin marketplace add /absolute/path/to/mexus-agent-team
@@ -79,103 +82,49 @@ claude plugin install mexus-team@mexus-team
 claude plugin list
 ```
 
-Then start Claude Code normally from any project directory and invoke:
-
-```text
-/mexus-team:mission "Build a small demo feature"
-```
-
-If installation cannot find the marketplace file, make sure the path points at:
-
-```text
-/absolute/path/to/mexus-agent-team/.claude-plugin/marketplace.json
-```
-
-Do not pass the parent `plugins/` directory unless that parent contains its own `.claude-plugin/marketplace.json`.
-
-To update after editing this local plugin, reinstall or remove/install it again:
+To update after editing the plugin:
 
 ```bash
 claude plugin uninstall mexus-team
 claude plugin install mexus-team@mexus-team
 ```
 
-## Claude Code Marketplace Shape
+The marketplace also carries per-skill entries (`mexus-team-mission`, `mexus-team-board`, …) for future single-skill installs; use the `mexus-team` bundle for now.
 
-This directory also carries `.claude-plugin/marketplace.json`, following the Waza-style layout:
+**Codex**
 
-- bundle entry `mexus-team`, source `./`, registers every skill under `/mexus-team:*`;
-- per-skill entries such as `mexus-team-mission`, source `./skills/mission`, for future single-skill installs.
+`.codex-plugin/plugin.json` registers the same skills under `./skills/`. Point Codex at this directory and invoke the skills by name.
 
-For local development, keep using `--plugin-dir` against this directory. For distribution, publish this directory or its future standalone repository as a Claude Code marketplace and install the bundle entry.
+## Workflow
 
-## Typical Workflow
+A typical Mission, start to finish:
 
-1. Start Claude Code in your project.
-2. Create a Mission and start executing it:
+1. **Create and run** — `/mexus-team:mission "Implement the feature or fix"`. This plans the squad, publishes kanban tasks, starts the board, and dispatches the first Agents. Squad Lead keeps coordinating follow-up work in the same session.
+2. **Watch** — open the board separately with `/mexus-team:board` if you want a live view. It shows Mission Plan, Kanban, Agents, Squad Lead Log, and RoundTable.
+3. **Decide** — `/mexus-team:roundtable "Choose the API boundary"` when a choice spans multiple agents or shared interfaces.
+4. **Check** — `/mexus-team:status` for a quick terminal summary.
+5. **Resume** — `/mexus-team:continue` in a new session to keep an unfinished Mission moving.
 
-   ```text
-   /mexus-team:mission "Implement the feature or fix"
-   ```
+## Board
 
-   This plans the squad, publishes kanban tasks, starts (or reuses) the board, and dispatches the first background Agents. Squad Lead keeps coordinating follow-up tasks within the same session.
-
-3. Open the board if you want to watch separately:
-
-   ```text
-   /mexus-team:board
-   ```
-
-   The board is read-only. It shows Mission Plan, Kanban, Agents, Squad Lead Log, and RoundTable.
-
-4. Open a RoundTable proposal when a shared decision is needed:
-
-   ```text
-   /mexus-team:roundtable "Choose the API boundary"
-   ```
-
-5. Check status:
-
-   ```text
-   /mexus-team:status
-   ```
-
-6. Resume the Mission later, in a new session:
-
-   ```text
-   /mexus-team:continue
-   ```
-
-## Board Access
-
-The board command starts a local Vite board and an API server. By default it binds to `0.0.0.0` so it can be opened from another machine if your network allows it. If a board is already running for the project it is reused and its URL is reprinted instead of starting a second one.
-
-Useful options:
+The board command starts a local Vite app and an API server. By default it binds to `0.0.0.0`, so it can be opened from another device on your network. If a board is already running for the project, it is reused and its URL reprinted instead of starting a second one.
 
 ```text
 /mexus-team:board --host 0.0.0.0
 /mexus-team:board --host 0.0.0.0 --public-host <lan-ip-or-hostname>
 ```
 
-The board is a foreground process. Stop it with `Ctrl+C` in the terminal where it runs.
-
-## Execution Model
-
-`Squad Lead` is a fixed coordination role name and is not part of the execution Agent naming pool. `/mexus-team:mission` creates the Mission, then Squad Lead plans execution Agents and actionable kanban tasks, starts the board, and dispatches the first background Agents. Squad Lead's decomposition work is not itself a kanban task.
-
-Squad Lead starts Claude Code or Codex background Agents to execute kanban tasks. Background Agents must use names from the `agent-team-mission-workflow` convention — short names drawn at random from the Ars Goetia / Lesser Key of Solomon set, never sequential placeholders. They read the Mission files, claim tasks in `kanban.md`, write their own task results back to `kanban.md`, and publish follow-up or clarification tasks when needed. Squad Lead does not fill execution results for another Agent.
-
-Every kanban work item follows publisher acceptance: the task publisher creates the task, the executor completes and self-tests it, then the publisher fills `Review`. Squad Lead also performs overall Mission acceptance; when the Mission is still below expectation, Squad Lead publishes new focused tasks to the responsible Agents. If an executor finds a task outside its responsibility, it reassigns the task when the correct owner is clear, or publishes a clarification task to Squad Lead when ownership is unclear.
-
-Within a single `/mexus-team:mission` session, Squad Lead selects new `To Claim` tasks and dispatches the next background Agents itself as work progresses — the user does not run a command for in-session follow-up. `/mexus-team:continue` exists only to resume a Mission whose original session has ended; it reads the existing kanban and restarts outstanding tasks without re-planning the Mission.
-
-Starting a new Mission archives the previous active Mission. `/mexus-team:continue` uses the current active Mission by default; archived Missions are historical unless explicitly selected by name.
-
-This plugin does not require a Mexus server, panes, or a Mission Inbox, and uses no external A2A layer. The kanban file is the communication protocol.
+The board is read-only and runs in the foreground — stop it with `Ctrl+C` in its terminal.
 
 ## Roster Maintenance
 
-`agent-team/agents.md` is the repository-level reusable Agent roster. It should be updated from accepted Mission work, not edited as ad-hoc scratch space. The active Mission's `agents.md` and accepted `kanban.md` tasks are the source for durable module ownership, known strengths, and work history.
+`agent-team/agents.md` is the repository-level roster of reusable Agents. It is updated from accepted Mission work, not edited as scratch space — the active Mission's `agents.md` and accepted `kanban.md` tasks are the source for durable module ownership, known strengths, and work history.
+
+## Design Notes
+
+- The whole protocol is Markdown in the repo. Coordination is a file edit, review is a diff, and the history is in `git log`.
+- `Squad Lead` is the single fixed coordination role; execution Agents are named at random from the Ars Goetia set, so a name is a handle and not a task label.
+- Commands have non-overlapping jobs: `mission` only creates, `continue` only resumes, the rest only observe.
 
 ## Verify Locally
 
@@ -183,17 +132,19 @@ This plugin does not require a Mexus server, panes, or a Mission Inbox, and uses
 node tests/standalone-smoke.test.mjs
 ```
 
-To try it in a temp project:
+Try it against a temp project:
 
 ```bash
 mkdir -p /tmp/mexus-agent-team-demo
 cd /tmp/mexus-agent-team-demo
 
 node /absolute/path/to/mexus-agent-team/scripts/start-mission.mjs \
-  --root "$PWD" \
-  --name demo-mission \
-  --request "Build a small demo feature"
+  --root "$PWD" --name demo-mission --request "Build a small demo feature"
 
 node /absolute/path/to/mexus-agent-team/scripts/status.mjs --root "$PWD" --name demo-mission
 node /absolute/path/to/mexus-agent-team/scripts/start-board.mjs --root "$PWD" --host 0.0.0.0
 ```
+
+## License
+
+Apache-2.0. Use it and contribute back.
