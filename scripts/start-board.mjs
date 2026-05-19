@@ -56,13 +56,46 @@ function field(markdown, label) {
   return markdown.match(new RegExp(`^${label}:\\s*(.*)$`, 'm'))?.[1]?.trim() || ''
 }
 
+function processAlive(pid) {
+  if (!pid) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return error.code === 'EPERM'
+  }
+}
+
+function reuseRunningBoard(stateFile) {
+  if (!fs.existsSync(stateFile)) return null
+  let state
+  try {
+    state = JSON.parse(fs.readFileSync(stateFile, 'utf8'))
+  } catch {
+    fs.rmSync(stateFile, { force: true })
+    return null
+  }
+  if (processAlive(state.pid)) return state
+  fs.rmSync(stateFile, { force: true })
+  return null
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const root = path.resolve(args.root)
   const agentTeamDir = path.join(root, 'agent-team')
   if (!fs.existsSync(agentTeamDir)) {
-    console.error('No agent-team/ directory found. Run /mexus-skill:team "<request>" first.')
+    console.error('No agent-team/ directory found. Run /mexus-team:mission "<request>" first.')
     process.exit(1)
+  }
+
+  const stateDir = path.join(root, '.mexus-agent-team')
+  const stateFile = path.join(stateDir, 'board.json')
+  const running = reuseRunningBoard(stateFile)
+  if (running) {
+    console.log(`Agent Team board already running: ${running.url}`)
+    console.log(`Agent Team API: ${running.apiUrl}`)
+    return
   }
 
   const apiServer = http.createServer((req, res) => {
@@ -138,7 +171,6 @@ async function main() {
     stdio: 'inherit',
   })
 
-  const stateDir = path.join(root, '.mexus-agent-team')
   fs.mkdirSync(stateDir, { recursive: true })
   const state = {
     pid: process.pid,
@@ -150,14 +182,14 @@ async function main() {
     projectRoot: root,
     startedAt: new Date().toISOString(),
   }
-  fs.writeFileSync(path.join(stateDir, 'board.json'), JSON.stringify(state, null, 2))
+  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2))
   console.log(`Agent Team board: ${state.url}`)
   console.log(`Agent Team API: ${state.apiUrl}`)
 
   const cleanup = () => {
     try { vite.kill('SIGTERM') } catch {}
     try { apiServer.close() } catch {}
-    try { fs.rmSync(path.join(stateDir, 'board.json'), { force: true }) } catch {}
+    try { fs.rmSync(stateFile, { force: true }) } catch {}
   }
   process.on('SIGINT', () => { cleanup(); process.exit(0) })
   process.on('SIGTERM', () => { cleanup(); process.exit(0) })

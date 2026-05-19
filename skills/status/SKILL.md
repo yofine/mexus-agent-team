@@ -1,12 +1,12 @@
 ---
-name: team-status
+name: status
 description: Use when summarizing a Markdown-only Agent Team Mission from local files.
 argument-hint: "[--name <mission-name>]"
 ---
 
-# `/mexus-skill:team-status`
+# `/mexus-team:status`
 
-Use this skill when the user invokes `/mexus-skill:team-status`.
+Use this skill when the user invokes `/mexus-team:status`.
 
 Run:
 

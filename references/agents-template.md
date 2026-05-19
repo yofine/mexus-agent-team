@@ -20,7 +20,7 @@ Each agent should read:
 
 Use these short names in `kanban.md` for `To`, `From`, `Updated`, and `Review`.
 
-Names are stable communication handles chosen from the Ars Goetia / Lesser Key of Solomon name set. They do not describe the task.
+Names are stable communication handles drawn at random from the Ars Goetia / Lesser Key of Solomon name set, never sequential placeholders. They do not describe the task and must not repeat another Agent in this Mission or in `agent-team/agents.md`.
 
 | Agent Name | Responsibility |
 | --- | --- |

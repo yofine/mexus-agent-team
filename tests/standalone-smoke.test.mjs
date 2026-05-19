@@ -7,17 +7,18 @@ import { teamStatus } from '../scripts/status.mjs'
 
 const pluginRoot = path.resolve(new URL('..', import.meta.url).pathname)
 
+const SKILLS = ['mission', 'continue', 'roundtable', 'board', 'status']
+
 for (const file of [
   '.codex-plugin/plugin.json',
   '.claude-plugin/plugin.json',
   '.claude-plugin/marketplace.json',
   'README.md',
-  'skills/team/SKILL.md',
-  'skills/run/SKILL.md',
+  'skills/mission/SKILL.md',
+  'skills/continue/SKILL.md',
   'skills/roundtable/SKILL.md',
   'skills/board/SKILL.md',
-  'skills/team-status/SKILL.md',
-  'skills/team-stop/SKILL.md',
+  'skills/status/SKILL.md',
   'skills/board/board-app/package.json',
   'references/mission-workflow.md',
   'references/agent-roster-template.md',
@@ -29,16 +30,27 @@ for (const file of [
   'scripts/start-mission.mjs',
   'scripts/status.mjs',
   'scripts/start-board.mjs',
-  'scripts/stop-board.mjs',
 ]) {
   assert.ok(fs.existsSync(path.join(pluginRoot, file)), `${file} should exist`)
 }
 
-for (const skill of ['team', 'run', 'roundtable', 'board', 'team-status', 'team-stop']) {
+// team-stop and its script were removed; nobody stops the board explicitly.
+assert.ok(!fs.existsSync(path.join(pluginRoot, 'skills/team-stop')), 'team-stop skill should be removed')
+assert.ok(!fs.existsSync(path.join(pluginRoot, 'scripts/stop-board.mjs')), 'stop-board.mjs should be removed')
+
+for (const skill of SKILLS) {
   const body = fs.readFileSync(path.join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8')
   assert.match(body, /^---\n[\s\S]+?\n---\n/, `${skill} should have frontmatter`)
   assert.match(body, /description: .+/, `${skill} should have description`)
 }
+
+// mission only creates; continue only resumes. The two must not overlap.
+const missionSkill = fs.readFileSync(path.join(pluginRoot, 'skills/mission/SKILL.md'), 'utf8')
+assert.match(missionSkill, /only creates a new Mission/i)
+assert.match(missionSkill, /start-board\.mjs/, 'mission should start the board')
+const continueSkill = fs.readFileSync(path.join(pluginRoot, 'skills/continue/SKILL.md'), 'utf8')
+assert.match(continueSkill, /only continues an existing active Mission/i)
+assert.match(continueSkill, /does not .*archive/i, 'continue must state it does not archive Missions')
 
 const boardSkill = fs.readFileSync(path.join(pluginRoot, 'skills/board/SKILL.md'), 'utf8')
 assert.match(boardSkill, /--host 0\.0\.0\.0/)
@@ -47,33 +59,35 @@ assert.match(boardSkill, /--public-host/)
 const startBoardScript = fs.readFileSync(path.join(pluginRoot, 'scripts/start-board.mjs'), 'utf8')
 assert.match(startBoardScript, /host: '0\.0\.0\.0'/)
 assert.match(startBoardScript, /--public-host/)
+assert.match(startBoardScript, /processAlive/, 'start-board should check whether a board process is still alive')
 
 const claudePlugin = JSON.parse(fs.readFileSync(path.join(pluginRoot, '.claude-plugin/plugin.json'), 'utf8'))
-assert.equal(claudePlugin.name, 'mexus-skill')
+assert.equal(claudePlugin.name, 'mexus-team')
 
 const codexPlugin = JSON.parse(fs.readFileSync(path.join(pluginRoot, '.codex-plugin/plugin.json'), 'utf8'))
-assert.equal(codexPlugin.name, 'mexus-skill')
+assert.equal(codexPlugin.name, 'mexus-team')
 
 const marketplace = JSON.parse(fs.readFileSync(path.join(pluginRoot, '.claude-plugin/marketplace.json'), 'utf8'))
-assert.equal(marketplace.name, 'mexus-skill')
+assert.equal(marketplace.name, 'mexus-team')
 assert.ok(Array.isArray(marketplace.plugins), 'marketplace plugins should be an array')
 assert.ok(
-  marketplace.plugins.some((plugin) => plugin.name === 'mexus-skill' && plugin.source === './'),
+  marketplace.plugins.some((plugin) => plugin.name === 'mexus-team' && plugin.source === './'),
   'marketplace should include a bundle entry at ./',
 )
-for (const skill of ['team', 'run', 'roundtable', 'board', 'team-status', 'team-stop']) {
+for (const skill of SKILLS) {
   assert.ok(
     marketplace.plugins.some(
-      (plugin) => plugin.name === `mexus-skill-${skill}` && plugin.source === `./skills/${skill}`,
+      (plugin) => plugin.name === `mexus-team-${skill}` && plugin.source === `./skills/${skill}`,
     ),
     `marketplace should include per-skill entry for ${skill}`,
   )
 }
 
 const readme = fs.readFileSync(path.join(pluginRoot, 'README.md'), 'utf8')
-assert.match(readme, /\/mexus-skill:team/)
-assert.match(readme, /\/mexus-skill:run/)
-assert.match(readme, /\/mexus-skill:roundtable/)
+assert.match(readme, /\/mexus-team:mission/)
+assert.match(readme, /\/mexus-team:continue/)
+assert.match(readme, /\/mexus-team:roundtable/)
+assert.doesNotMatch(readme, /mexus-skill/)
 assert.doesNotMatch(readme, /^\/team/m)
 
 const forbiddenRuntimeTerms = [
@@ -82,7 +96,7 @@ const forbiddenRuntimeTerms = [
   'MissionInboxPipeline',
   'external A2A',
 ]
-for (const rel of ['README.md', 'skills/team/SKILL.md']) {
+for (const rel of ['README.md', 'skills/mission/SKILL.md']) {
   const body = fs.readFileSync(path.join(pluginRoot, rel), 'utf8')
   for (const term of forbiddenRuntimeTerms) {
     if (term === 'external A2A') {
@@ -125,22 +139,35 @@ assert.match(mission, /Do not require a Mexus server/)
 assert.match(mission, /external A2A/)
 assert.match(mission, /Each executing background Agent/)
 
+// The seed Agent name is drawn at random from the Ars Goetia set.
+const ARS_GOETIA = [
+  'Bael', 'Agares', 'Vassago', 'Samigina', 'Marbas', 'Valefor', 'Amon', 'Barbatos',
+  'Paimon', 'Buer', 'Gusion', 'Sitri', 'Beleth', 'Leraje', 'Eligos', 'Zepar',
+  'Botis', 'Bathin', 'Sallos', 'Purson', 'Marax', 'Ipos', 'Aim', 'Naberius',
+  'Glasya', 'Bune', 'Ronove', 'Berith', 'Astaroth', 'Forneus', 'Foras', 'Asmoday',
+  'Gaap', 'Furfur', 'Marchosias', 'Stolas', 'Phenex', 'Halphas', 'Malphas', 'Raum',
+  'Focalor', 'Vepar', 'Sabnock', 'Shax', 'Vine', 'Bifrons', 'Vual', 'Haagenti',
+  'Crocell', 'Furcas', 'Balam', 'Alloces', 'Caim', 'Murmur', 'Orobas', 'Gremory',
+  'Ose', 'Amy', 'Orias', 'Vapula', 'Zagan', 'Valac', 'Andras', 'Flauros',
+  'Andrealphus', 'Kimaris', 'Amdusias', 'Belial', 'Decarabia', 'Seere', 'Dantalion', 'Andromalius',
+]
+
 const agents = fs.readFileSync(path.join(temp, 'agent-team/missions/demo-mission/agents.md'), 'utf8')
 assert.match(agents, /Squad Lead: Squad Lead/)
-assert.match(agents, /Agares/)
 assert.match(agents, /background Agent/)
 assert.match(agents, /Modules:/)
 assert.match(agents, /kanban\.md is the communication channel/)
-assert.doesNotMatch(agents, /Bael/)
+const seedName = agents.match(/^## Agent: (\S+)\s*$/m)?.[1]
+assert.ok(seedName && ARS_GOETIA.includes(seedName), `seed Agent name should be an Ars Goetia name, got: ${seedName}`)
 
 const status = teamStatus(['--root', temp, '--name', 'demo-mission'])
 assert.match(status, /Mission: demo-mission/)
 assert.match(status, /Tasks: 1 to claim \/ 0 in progress \/ 0 done/)
 
 const kanban = fs.readFileSync(path.join(temp, 'agent-team/missions/demo-mission/kanban.md'), 'utf8')
-assert.match(kanban, /To: Agares \| From: Squad Lead/)
+assert.match(kanban, new RegExp(`To: ${seedName} \\| From: Squad Lead`))
 assert.doesNotMatch(kanban, /From: User|Updated: .*User/)
-assert.doesNotMatch(kanban, /To: Squad Lead|Bael/)
+assert.doesNotMatch(kanban, /To: Squad Lead/)
 
 const second = startMission([
   '--root',

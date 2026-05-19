@@ -446,30 +446,28 @@ export function App() {
               <article>
                 <strong>Commands</strong>
                 <dl>
-                  <dt><code>/mexus-skill:team "&lt;request&gt;"</code></dt>
-                  <dd>Create a new active Mission, archive the previous active Mission, and plan Agents plus kanban tasks.</dd>
-                  <dt><code>/mexus-skill:run</code></dt>
-                  <dd>Execute the latest active Mission by starting background Agents from the kanban.</dd>
-                  <dt><code>/mexus-skill:roundtable "&lt;topic&gt;"</code></dt>
+                  <dt><code>/mexus-team:mission "&lt;request&gt;"</code></dt>
+                  <dd>Create a new active Mission, archive the previous one, plan Agents and kanban tasks, start the board, and dispatch the first background Agents.</dd>
+                  <dt><code>/mexus-team:continue</code></dt>
+                  <dd>Resume the active Mission in a later session by restarting outstanding kanban tasks.</dd>
+                  <dt><code>/mexus-team:roundtable "&lt;topic&gt;"</code></dt>
                   <dd>Open a Pending Review proposal for a shared decision in the active Mission.</dd>
-                  <dt><code>/mexus-skill:board</code></dt>
+                  <dt><code>/mexus-team:board</code></dt>
                   <dd>Open this read-only local Web board for Mission observation.</dd>
-                  <dt><code>/mexus-skill:team-status</code></dt>
+                  <dt><code>/mexus-team:status</code></dt>
                   <dd>Print Mission, task, and Agent status in the terminal.</dd>
-                  <dt><code>/mexus-skill:team-stop</code></dt>
-                  <dd>Stop the local board process without deleting Mission files.</dd>
                 </dl>
               </article>
 
               <article>
                 <strong>Workflow</strong>
                 <div className="help-flow" aria-label="Agent Team workflow">
-                  <div><span>1</span><p><code>/team</code><br />Create active Mission</p></div>
+                  <div><span>1</span><p><code>/mission</code><br />Create active Mission</p></div>
                   <div><span>2</span><p>Squad Lead<br />plans Agents + Kanban</p></div>
-                  <div><span>3</span><p><code>/board</code><br />Observe Mission state</p></div>
-                  <div><span>4</span><p><code>/run</code><br />Start background Agents</p></div>
-                  <div><span>5</span><p>Agents claim,<br />execute, self-test</p></div>
-                  <div><span>6</span><p>Publisher reviews;<br />Squad Lead accepts</p></div>
+                  <div><span>3</span><p>Board starts;<br />background Agents dispatched</p></div>
+                  <div><span>4</span><p>Agents claim,<br />execute, self-test</p></div>
+                  <div><span>5</span><p>Publisher reviews;<br />Squad Lead accepts</p></div>
+                  <div><span>6</span><p><code>/continue</code><br />Resume in a later session</p></div>
                 </div>
               </article>
 

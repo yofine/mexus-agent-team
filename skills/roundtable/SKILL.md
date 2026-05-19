@@ -4,9 +4,9 @@ description: Use when opening a RoundTable proposal in the active Markdown-backe
 argument-hint: "\"<topic>\" [--invitees <agents|All|Squad Lead>] [--scope <path/module>] [--question \"<question>\"]"
 ---
 
-# `/mexus-skill:roundtable`
+# `/mexus-team:roundtable`
 
-Use this skill when the user invokes `/mexus-skill:roundtable`.
+Use this skill when the user invokes `/mexus-team:roundtable`.
 
 This command opens a RoundTable proposal in the active Mission's `roundtable.md`. It does not move kanban tasks and it does not execute work. RoundTable is for shared decisions that affect multiple Agents, shared interfaces, product direction, sequencing, acceptance criteria, or major risk trade-offs.
 
