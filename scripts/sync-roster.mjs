@@ -175,7 +175,7 @@ export function syncRoster(rawArgs = process.argv.slice(2)) {
   const agentTeamDir = path.join(root, 'agent-team')
   const missionsDir = path.join(agentTeamDir, 'missions')
   const missionName = args.name || activeMission(missionsDir)
-  if (!missionName) throw new Error('No Agent Team mission found. Run /mexus-skill:team "<request>" first.')
+  if (!missionName) throw new Error('No Agent Team mission found. Run /mexus-team:mission "<request>" first.')
 
   const missionDir = path.join(missionsDir, missionName)
   const rosterFile = path.join(agentTeamDir, 'agents.md')

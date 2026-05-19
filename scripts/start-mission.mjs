@@ -20,6 +20,36 @@ function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
+// The 72 spirits of the Ars Goetia / Lesser Key of Solomon. Agent names are
+// drawn at random from this set so squads never read as sequential placeholders.
+const ARS_GOETIA = [
+  'Bael', 'Agares', 'Vassago', 'Samigina', 'Marbas', 'Valefor', 'Amon', 'Barbatos',
+  'Paimon', 'Buer', 'Gusion', 'Sitri', 'Beleth', 'Leraje', 'Eligos', 'Zepar',
+  'Botis', 'Bathin', 'Sallos', 'Purson', 'Marax', 'Ipos', 'Aim', 'Naberius',
+  'Glasya', 'Bune', 'Ronove', 'Berith', 'Astaroth', 'Forneus', 'Foras', 'Asmoday',
+  'Gaap', 'Furfur', 'Marchosias', 'Stolas', 'Phenex', 'Halphas', 'Malphas', 'Raum',
+  'Focalor', 'Vepar', 'Sabnock', 'Shax', 'Vine', 'Bifrons', 'Vual', 'Haagenti',
+  'Crocell', 'Furcas', 'Balam', 'Alloces', 'Caim', 'Murmur', 'Orobas', 'Gremory',
+  'Ose', 'Amy', 'Orias', 'Vapula', 'Zagan', 'Valac', 'Andras', 'Flauros',
+  'Andrealphus', 'Kimaris', 'Amdusias', 'Belial', 'Decarabia', 'Seere', 'Dantalion', 'Andromalius',
+]
+
+function pickAgentName(excluded = []) {
+  const taken = new Set(excluded.map((name) => name.toLowerCase()))
+  const available = ARS_GOETIA.filter((name) => !taken.has(name.toLowerCase()))
+  const pool = available.length > 0 ? available : ARS_GOETIA
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+function rosterAgentNames(agentTeamDir) {
+  const rosterFile = path.join(agentTeamDir, 'agents.md')
+  if (!fs.existsSync(rosterFile)) return []
+  const body = fs.readFileSync(rosterFile, 'utf8')
+  return [...body.matchAll(/^##\s+([A-Za-z][A-Za-z-]*)\s*$/gm)]
+    .map((match) => match[1].trim())
+    .filter((name) => name && name !== 'Usage' && name !== 'Agent')
+}
+
 function slug(input) {
   return input
     .toLowerCase()
@@ -110,6 +140,9 @@ export function startMission(rawArgs = process.argv.slice(2)) {
     changed.push('agent-team/agents.md')
   }
 
+  // Draw the seed Agent name at random, skipping anyone already on the repo roster.
+  const agentName = pickAgentName(rosterAgentNames(agentTeamDir))
+
   const missionMd = `# Mission: ${name}
 
 Mission: \`${name}\`
@@ -172,17 +205,19 @@ Each Agent should read:
 
 ## Agent Names
 
+Names are stable collaboration handles drawn at random from the Ars Goetia / Lesser Key of Solomon name set. They do not describe the task. Squad Lead may add more Agents with the same naming rule, never reusing a name already in this Mission or in \`agent-team/agents.md\`.
+
 | Agent Name | Responsibility |
 | --- | --- |
-| Agares | Execute the first scoped implementation or investigation task planned by Squad Lead |
+| ${agentName} | Execute the first scoped implementation or investigation task planned by Squad Lead |
 
 ## Recommended Execution Order
 
-1. Agares
+1. ${agentName}
 
-## Agent: Agares
+## Agent: ${agentName}
 
-Owner label: \`Agares\`
+Owner label: \`${agentName}\`
 
 Responsibility: Execute one scoped kanban task delegated by Squad Lead.
 
@@ -193,7 +228,7 @@ Modules:
 Activation prompt:
 
 \`\`\`text
-You are Agares, a background Agent executing one scoped task for mission \`${name}\`. Your name is only a collaboration handle and does not describe the task. Read agent-team/mission-workflow.md, agent-team/missions/${name}/mission.md, agents.md, kanban.md, and roundtable.md, then read the exact task block assigned by Squad Lead. This is your current first task, not the full set of work you may do in this Mission. Prioritize work assigned to To: Agares in kanban.md. If the assigned task does not fit Agares responsibility and the correct owner is clear, update kanban.md to reassign it to the appropriate Mission Agent with a brief reason in Updated. If you cannot confidently identify the right owner, publish a clarification task to Squad Lead instead of guessing. Claim only your task by moving the full task block to In Progress. Work within Scope. Self-test before completion. Fill Result, Files, Verification, and Updated in your own task block in kanban.md before reporting back, then move it to Done only after verification. Leave Review for the task publisher named in From. Do not use external A2A messaging; kanban.md is the communication channel.
+You are ${agentName}, a background Agent executing one scoped task for mission \`${name}\`. Your name is only a collaboration handle and does not describe the task. Read agent-team/mission-workflow.md, agent-team/missions/${name}/mission.md, agents.md, kanban.md, and roundtable.md, then read the exact task block assigned by Squad Lead. This is your current first task, not the full set of work you may do in this Mission. Prioritize work assigned to To: ${agentName} in kanban.md. If the assigned task does not fit ${agentName} responsibility and the correct owner is clear, update kanban.md to reassign it to the appropriate Mission Agent with a brief reason in Updated. If you cannot confidently identify the right owner, publish a clarification task to Squad Lead instead of guessing. Claim only your task by moving the full task block to In Progress. Work within Scope. Self-test before completion. Fill Result, Files, Verification, and Updated in your own task block in kanban.md before reporting back, then move it to Done only after verification. Leave Review for the task publisher named in From. Do not use external A2A messaging; kanban.md is the communication channel.
 \`\`\`
 `
 
@@ -226,7 +261,7 @@ Squad Lead performs overall Mission acceptance separately. If the Mission result
 
 ## To Claim
 
-To: Agares | From: Squad Lead | Scope: \`.\`
+To: ${agentName} | From: Squad Lead | Scope: \`.\`
 - Ref: ${Math.random().toString(16).slice(2, 8)}
 - Request: Execute the first scoped implementation or investigation slice for the Mission request: ${request}
 - Reason: Squad Lead planned this as the first actionable background Agent task after creating the Mission.
@@ -246,7 +281,10 @@ No tasks claimed yet.
 No tasks completed yet.
 `
 
-  const roundtableMd = readReference('roundtable-template.md').replaceAll('<mission-name>', name).replaceAll('<YYYY-MM-DD>', date)
+  const roundtableMd = readReference('roundtable-template.md')
+    .replaceAll('<mission-name>', name)
+    .replaceAll('<YYYY-MM-DD>', date)
+    .replaceAll('Agares', agentName)
   const squadLeadMd = readReference('squad-lead-template.md')
     .replaceAll('<mission-name>', name)
     .replaceAll('<YYYY-MM-DD>', date)

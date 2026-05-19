@@ -1,18 +1,20 @@
 ---
-name: team
-description: Use when starting or continuing a Markdown-only Agent Team Mission with Claude Code or Codex background Agents and no Mexus server.
+name: mission
+description: Use when starting a new Markdown-only Agent Team Mission with Claude Code or Codex background Agents and no Mexus server.
 argument-hint: "\"<request>\" [--name <mission-name>]"
 ---
 
-# `/mexus-skill:team`
+# `/mexus-team:mission`
 
-Use this skill when the user invokes `/mexus-skill:team "<request>"`.
+Use this skill when the user invokes `/mexus-team:mission "<request>"`.
+
+This skill **only creates a new Mission**. To continue an already-active Mission, use `/mexus-team:continue` instead. A `<request>` argument is required.
 
 This is a standalone Agent Team workflow. It must not call `mexus`, create panes, use Mission Inbox, or rely on external A2A messaging. Communication happens through `agent-team/` Markdown files, especially `kanban.md`.
 
 Starting a Mission makes it the only active Mission in the workspace. Any previous active Mission is archived by changing its `mission.md` lifecycle to `Lifecycle: archived`.
 
-## Start Or Continue
+## Create The Mission
 
 1. Preserve the user's request.
 2. Choose a Mission name from `--name` or derive a short slug.
@@ -29,15 +31,30 @@ Starting a Mission makes it the only active Mission in the workspace. Any previo
    - `agent-team/missions/<mission-name>/kanban.md`
    - `agent-team/missions/<mission-name>/roundtable.md`
 5. Act as Squad Lead.
-6. Immediately refine the generated `agents.md` and `kanban.md` so the Mission has the right execution Agents and actionable worker tasks before you report back to the user.
+6. Refine the generated `agents.md` and `kanban.md` so the Mission has the right execution Agents and actionable worker tasks.
+
+## Then Start The Board
+
+7. After the roster and kanban are planned, start (or reuse) the read-only board so the user can watch execution:
+
+   ```bash
+   node <plugin-root>/scripts/start-board.mjs --root "$PWD" --host 0.0.0.0
+   ```
+
+   The script reuses a board that is already running for this project and only prints its URL; it starts a fresh board only when none is alive. Print the board URL to the user.
+
+## Then Execute
+
+8. Use the Agent tool to start Claude Code or Codex background Agents in parallel for the independent kanban tasks planned in step 6.
+9. Within this same session, Squad Lead keeps coordinating: when an Agent finishes, reports a blocker, or a new actionable task appears in `kanban.md`, Squad Lead dispatches the next background Agents itself. The user does not run a command for in-session follow-up; `/mexus-team:continue` is only for resuming a Mission in a later session.
 
 ## Execution Rules
 
 - `Squad Lead` is a fixed coordination role name. Do not rename it, and do not consume one of the execution Agent names for Squad Lead.
-- Squad Lead decomposition work is not a kanban task. `/mexus-skill:team` must finish with a planned roster and planned kanban tasks for execution Agents.
+- Squad Lead decomposition work is not a kanban task. `/mexus-team:mission` must finish with a planned roster, planned kanban tasks, a running board, and the first background Agents dispatched.
 - Treat `agent-team/agents.md` as the long-term repository roster. Reuse existing Agents when their module history fits, and add new Agents only when no close owner exists.
 - Use Claude Code or Codex background Agents for worker execution.
-- Every execution Agent must be named according to `agent-team-mission-workflow`: short stable names from the Ars Goetia / Lesser Key of Solomon name set.
+- Every execution Agent must be named according to `agent-team-mission-workflow`: short stable names drawn at random from the Ars Goetia / Lesser Key of Solomon name set, never sequential placeholders. A name must not repeat another Agent in this Mission or in `agent-team/agents.md`.
 - Do not use external A2A, inbox, pane dispatch, or Mexus runtime features.
 - Kanban is the communication protocol.
 - Kanban task `From` must be Squad Lead or an executing Agent, never `User`.
@@ -48,7 +65,6 @@ Starting a Mission makes it the only active Mission in the workspace. Any previo
 - Squad Lead owns mission-level acceptance. If the overall result is below expectation, publish new focused tasks to the responsible Agents instead of editing another Agent's completed result.
 - If a task is outside an Agent's scope and the correct owner is clear, reassign it in `kanban.md` with the reason in `Updated`.
 - If task ownership is unclear, publish a clarification task to the Squad Lead.
-- Use the Agent tool to start background Agents in parallel for independent kanban tasks.
 - Use `roundtable.md` for decisions that affect multiple Agents, shared interfaces, mission scope, product direction, sequencing, acceptance criteria, or major risk trade-offs.
 - Review Done tasks before declaring the Mission complete.
 
@@ -70,10 +86,11 @@ Every background Agent prompt must include:
 
 ## Output
 
-After creating or continuing the Mission, tell the user:
+After creating the Mission, tell the user:
 
 - Mission name.
 - Files created or reused.
 - Previous Missions archived, if any.
 - Execution Agents planned and the kanban tasks published for them.
-- That `/mexus-skill:board` can open a local read-only board.
+- The board URL (reused or newly started).
+- Background Agents dispatched for the first task batch.

@@ -78,7 +78,9 @@ Squad Lead publishes, dispatches, clarifies, integrates, and reviews. Squad Lead
 
 ## Agent Naming
 
-- Use short stable names from Ars Goetia / Lesser Key of Solomon.
+- Draw short stable names at random from the Ars Goetia / Lesser Key of Solomon name set.
+- Do not use sequential or positional placeholders; the name is a handle, not an index.
+- A name must not repeat another Agent in the same Mission or in `agent-team/agents.md`.
 - Names are communication handles and must not encode tasks.
 - Responsibilities live in `agents.md`.
 - Reuse existing agents from `agent-team/agents.md` when their module history or responsibility fit is close.

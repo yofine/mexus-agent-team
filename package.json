@@ -1,5 +1,5 @@
 {
-  "name": "mexus-skill",
+  "name": "mexus-team",
   "private": true,
   "version": "0.1.0",
   "description": "Standalone Markdown-only Agent Team plugin for Claude Code and Codex.",

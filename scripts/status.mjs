@@ -53,7 +53,7 @@ export function teamStatus(rawArgs = process.argv.slice(2)) {
   const missionsDir = path.join(root, 'agent-team', 'missions')
   const mission = args.name || newestMission(missionsDir)
   if (!mission) {
-    throw new Error('No Agent Team mission found. Run /mexus-skill:team "<request>" first.')
+    throw new Error('No Agent Team mission found. Run /mexus-team:mission "<request>" first.')
   }
 
   const kanbanFile = path.join(missionsDir, mission, 'kanban.md')

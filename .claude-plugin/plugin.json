@@ -1,5 +1,5 @@
 {
-  "name": "mexus-skill",
+  "name": "mexus-team",
   "version": "0.1.0",
   "description": "Markdown-only Agent Team workflow for Claude Code without requiring a Mexus server.",
   "author": {
