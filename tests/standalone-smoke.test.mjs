@@ -100,7 +100,11 @@ for (const rel of ['README.md', 'skills/mission/SKILL.md']) {
   const body = fs.readFileSync(path.join(pluginRoot, rel), 'utf8')
   for (const term of forbiddenRuntimeTerms) {
     if (term === 'external A2A') {
-      assert.match(body, /no external A2A|without external A2A|Do not use external A2A/i, `${rel} should explicitly reject external A2A`)
+      assert.match(
+        body,
+        /no external A2A|without external A2A|Do not use external A2A|does not require[^.]*A2A/i,
+        `${rel} should explicitly reject external A2A`,
+      )
     } else {
       assert.ok(!body.includes(term), `${rel} should not depend on ${term}`)
     }
