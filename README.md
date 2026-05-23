@@ -53,47 +53,25 @@ Within one `/mexus-team:mission` session, Squad Lead dispatches follow-up tasks 
 
 ## Install
 
-**Session-only (Claude Code)**
+In Claude Code, add the marketplace from the GitHub repo and install the bundle:
 
-Load the plugin for the current session, from any project directory:
-
-```bash
-claude --plugin-dir /absolute/path/to/mexus-agent-team
+```text
+/plugin marketplace add yofine/mexus-agent-team
+/plugin install mexus-team@mexus-team
+/reload-plugins
 ```
 
-`--plugin-dir` may not show up in `/plugin list`; verify with `/help` or by invoking `/mexus-team:mission`. Do not pass `--disable-slash-commands`.
+`mexus-team@mexus-team` is `<plugin-name>@<marketplace-name>`. Both are defined in `.claude-plugin/marketplace.json`; the GitHub repo slug (`mexus-agent-team`) is not the install handle.
 
-If the command is not found:
+The bundle registers all five commands under the `mexus-team:` namespace. The marketplace also carries per-skill entries such as `mexus-team-mission@mexus-team` for future single-skill installs; install the bundle for now.
 
-```bash
-claude plugin validate /absolute/path/to/mexus-agent-team
-claude --plugin-dir /absolute/path/to/mexus-agent-team --debug-file /tmp/mexus-team-debug.log
+To update after the upstream changes:
+
+```text
+/plugin uninstall mexus-team
+/plugin install mexus-team@mexus-team
+/reload-plugins
 ```
-
-The debug log should contain `Loaded inline plugin from path: mexus-team`.
-
-**Local marketplace (Claude Code)**
-
-The marketplace file lives inside this directory at `.claude-plugin/marketplace.json`, so add the plugin directory itself:
-
-```bash
-claude plugin marketplace add /absolute/path/to/mexus-agent-team
-claude plugin install mexus-team@mexus-team
-claude plugin list
-```
-
-To update after editing the plugin:
-
-```bash
-claude plugin uninstall mexus-team
-claude plugin install mexus-team@mexus-team
-```
-
-The marketplace also carries per-skill entries (`mexus-team-mission`, `mexus-team-board`, …) for future single-skill installs; use the `mexus-team` bundle for now.
-
-**Codex**
-
-`.codex-plugin/plugin.json` registers the same skills under `./skills/`. Point Codex at this directory and invoke the skills by name.
 
 ## Workflow
 
